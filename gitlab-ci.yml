@@ -1,0 +1,53 @@
+# Simple CI/CD Pipeline for Gemini Chatbot
+
+stages:
+  - test
+  - build
+  - deploy
+
+variables:
+  PYTHON_VERSION: "3.9"
+
+# Stage 1: Test the code
+test_job:
+  stage: test
+  image: python:3.9
+  before_script:
+    - pip install --upgrade pip
+    - pip install -r requirements.txt
+  script:
+    - echo "Testing the chatbot code..."
+    - python -c "import google.generativeai; print('✅ Google AI package works!')"
+    - python -c "from dotenv import load_dotenv; print('✅ Python-dotenv works!')"
+    - echo "✅ All tests passed!"
+  only:
+    - main
+
+# Stage 2: Build Docker image
+build_job:
+  stage: build
+  image: docker:latest
+  services:
+    - docker:dind
+  variables:
+    DOCKER_DRIVER: overlay2
+    DOCKER_TLS_CERTDIR: "/certs"
+  before_script:
+    - docker info
+  script:
+    - echo "🐳 Building Docker image..."
+    - docker build -t gemini-chatbot:$CI_COMMIT_SHORT_SHA .
+    - docker build -t gemini-chatbot:latest .
+    - echo "✅ Docker image built successfully!"
+    - docker images
+  only:
+    - main
+
+# Stage 3: Deploy (we'll add Azure deployment here later)
+deploy_job:
+  stage: deploy
+  script:
+    - echo "✅ Ready for deployment to Azure!"
+    - echo "Deployment will be configured in next steps"
+  only:
+    - main
